@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(TideIsland VERSION 1.0.28 LANGUAGES CXX)
+project(TideIsland VERSION 1.0.29 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -41,6 +41,22 @@ add_test(
     NAME wallpaper_apply
     COMMAND "${PYTHON3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/wallpaper_apply_tests.py"
 )
+
+add_executable(application_search_tests
+    tests/application_search_tests.cpp
+)
+
+target_compile_definitions(application_search_tests PRIVATE
+    APPLICATION_SEARCH_SOURCE="${CMAKE_CURRENT_SOURCE_DIR}/qml/common/ApplicationSearch.js"
+)
+
+target_link_libraries(application_search_tests PRIVATE
+    Qt6::Core
+    Qt6::Qml
+    Qt6::Test
+)
+
+add_test(NAME application_search COMMAND application_search_tests)
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/lyricsmpris_core_tests.cpp")
     add_executable(lyricsmpris_tests
@@ -203,6 +219,7 @@ install(DIRECTORY qml
     DESTINATION ${CMAKE_INSTALL_DATADIR}/tide-island
     FILES_MATCHING
         PATTERN "*.qml"
+        PATTERN "*.js"
         PATTERN "*.svg"
         PATTERN "*.json"
 )

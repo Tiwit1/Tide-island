@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
+import "../common/ApplicationSearch.js" as ApplicationSearch
 
 FocusScope {
     id: root
@@ -33,21 +34,6 @@ FocusScope {
             duration: root.showCondition ? 220 : 120
             easing.type: Easing.InOutQuad
         }
-    }
-
-    function searchableText(entry) {
-        if (!entry)
-            return "";
-
-        return [
-            entry.name,
-            entry.genericName,
-            entry.comment,
-            entry.id,
-            entry.startupClass,
-            entry.categories ? entry.categories.join(" ") : "",
-            entry.keywords ? entry.keywords.join(" ") : ""
-        ].join(" ").toLocaleLowerCase();
     }
 
     function isFavorite(entry) {
@@ -167,26 +153,39 @@ FocusScope {
     }
 
     function rebuildApplications() {
-        const needle = root.query.trim().toLocaleLowerCase();
+        const hasQuery = ApplicationSearch.normalize(root.query) !== "";
         const available = DesktopEntries.applications.values;
-        const nextApplications = [];
+        const rankedApplications = [];
 
         for (let index = 0; index < available.length; ++index) {
             const entry = available[index];
             if (!entry || entry.noDisplay || String(entry.name).trim() === "")
                 continue;
-            if (needle !== "" && root.searchableText(entry).indexOf(needle) < 0)
+
+            const score = hasQuery ? ApplicationSearch.applicationScore(entry, root.query) : 0;
+            if (score < 0)
                 continue;
-            nextApplications.push(entry);
+            rankedApplications.push({
+                entry: entry,
+                score: score + (hasQuery && root.isFavorite(entry) ? 45 : 0)
+            });
         }
 
-        nextApplications.sort((left, right) => {
-            const leftFavorite = root.isSortFavorite(left);
-            const rightFavorite = root.isSortFavorite(right);
-            if (leftFavorite !== rightFavorite)
+        rankedApplications.sort((left, right) => {
+            if (hasQuery && left.score !== right.score)
+                return right.score - left.score;
+
+            const leftFavorite = root.isSortFavorite(left.entry);
+            const rightFavorite = root.isSortFavorite(right.entry);
+            if (!hasQuery && leftFavorite !== rightFavorite)
                 return leftFavorite ? -1 : 1;
-            return String(left.name).localeCompare(String(right.name));
+
+            const nameOrder = String(left.entry.name).localeCompare(String(right.entry.name));
+            if (nameOrder !== 0)
+                return nameOrder;
+            return String(left.entry.id).localeCompare(String(right.entry.id));
         });
+        const nextApplications = rankedApplications.map(candidate => candidate.entry);
         root.filteredApplications = nextApplications;
         root.selectedIndex = nextApplications.length > 0 ? 0 : -1;
         if (!appGrid)
