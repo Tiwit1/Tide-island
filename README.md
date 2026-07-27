@@ -223,7 +223,7 @@ Search `Tide Island Settings` in any application launcher
 
 The Shortcut page can apply bindings automatically. On niri it writes `~/.config/tide-island/niri-shortcuts.kdl`, includes it from `~/.config/niri/config.kdl`, validates with `niri validate`, then reloads niri with `niri msg action load-config-file`.
 
-
+By default, `Super + Right` cycles through lyrics, clock, and custom views. `Super + Left` cycles through them in reverse.
 
 ## Common Commands
 

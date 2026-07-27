@@ -114,6 +114,17 @@ Item {
         const s = wsId>0?wsId:1
         return { x:(workspaceImplicitWidth+workspaceSpacing)*getWsColumn(s), y:(workspaceImplicitHeight+workspaceSpacing)*getWsRow(s) }
     }
+    function focusAdjacentWorkspace(rowDelta, columnDelta) {
+        const currentRow = getWsRow(effectiveActiveWorkspaceId)
+        const currentColumn = getWsColumn(effectiveActiveWorkspaceId)
+        const targetRow = currentRow + rowDelta
+        const targetColumn = currentColumn + columnDelta
+        if (targetRow < 0 || targetRow >= rows || targetColumn < 0 || targetColumn >= columns)
+            return false
+
+        const targetWorkspace = workspaceGroup * workspacesShown + getWsInCell(targetRow, targetColumn)
+        return hyprDispatch.focusWorkspace(targetWorkspace)
+    }
     function clamp(v,lo,hi) { const n=Number(v); return isFinite(n)?Math.max(lo,Math.min(hi,n)):lo }
     function tWidth(md) { if(!md) return monitor?monitor.width:(screen?screen.width:1920); return (md.transform&1)?md.height:md.width }
     function tHeight(md) { if(!md) return monitor?monitor.height:(screen?screen.height:1080); return (md.transform&1)?md.width:md.height }

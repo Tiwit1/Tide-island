@@ -50,7 +50,7 @@ QVariantList defaultShortcutBindings()
     return {
         shortcutMap(QStringLiteral("SUPER"), QStringLiteral("TAB"), QStringLiteral("overview"), QStringLiteral("toggle")),
         shortcutMap(QStringLiteral("SUPER"), QStringLiteral("right"), QStringLiteral("tide"), QStringLiteral("swipeRight")),
-        shortcutMap(QStringLiteral("SUPER"), QStringLiteral("left"), QStringLiteral("tide"), QStringLiteral("showCustom")),
+        shortcutMap(QStringLiteral("SUPER"), QStringLiteral("left"), QStringLiteral("tide"), QStringLiteral("swipeLeft")),
         shortcutMap(QStringLiteral("SUPER"), QStringLiteral("down"), QStringLiteral("tide"), QStringLiteral("showClock")),
         shortcutMap(QStringLiteral("SUPER"), QStringLiteral("M"), QStringLiteral("tide"), QStringLiteral("togglePlayer")),
         shortcutMap(QStringLiteral("SUPER"), QStringLiteral("C"), QStringLiteral("tide"), QStringLiteral("toggleControlCenter")),
@@ -203,6 +203,13 @@ ShortcutBinding migratedShortcutBinding(ShortcutBinding binding)
         && binding.mods.compare(QStringLiteral("SUPER"), Qt::CaseInsensitive) == 0
         && binding.key.compare(QStringLiteral("right"), Qt::CaseInsensitive) == 0) {
         binding.method = QStringLiteral("swipeRight");
+    }
+
+    if (binding.target.compare(QStringLiteral("tide"), Qt::CaseInsensitive) == 0
+        && binding.method.compare(QStringLiteral("showCustom"), Qt::CaseInsensitive) == 0
+        && binding.mods.compare(QStringLiteral("SUPER"), Qt::CaseInsensitive) == 0
+        && binding.key.compare(QStringLiteral("left"), Qt::CaseInsensitive) == 0) {
+        binding.method = QStringLiteral("swipeLeft");
     }
 
     return binding;

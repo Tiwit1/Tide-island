@@ -38,6 +38,8 @@ class ShortcutConfigTests : public QObject {
 
 private slots:
     void hyprlandDefaultsIncludeWorkspaceOverview();
+    void defaultsCycleIslandViewsWithArrowKeys();
+    void legacyArrowShortcutsMigrateToBidirectionalCycle();
     void defaultsIncludeNotificationHistory();
     void defaultsIncludeApplicationLauncher();
     void applicationLauncherFavoritesPersistAndResolveNames();
@@ -72,6 +74,76 @@ void ShortcutConfigTests::hyprlandDefaultsIncludeWorkspaceOverview()
                 && binding.value(QStringLiteral("method")).toString() == QStringLiteral("toggle"));
     }
     QVERIFY(foundOverview);
+}
+
+void ShortcutConfigTests::defaultsCycleIslandViewsWithArrowKeys()
+{
+    QTemporaryDir configHome;
+    QVERIFY(configHome.isValid());
+    qputenv("XDG_CONFIG_HOME", configHome.path().toLocal8Bit());
+    qputenv("TIDE_ISLAND_COMPOSITOR", "hyprland");
+
+    Backend backend;
+    bool foundNextView = false;
+    bool foundPreviousView = false;
+    for (const QVariant &value : backend.shortcutBindings()) {
+        const QVariantMap binding = value.toMap();
+        foundNextView = foundNextView
+            || (binding.value(QStringLiteral("mods")).toString() == QStringLiteral("SUPER")
+                && binding.value(QStringLiteral("key")).toString() == QStringLiteral("right")
+                && binding.value(QStringLiteral("target")).toString() == QStringLiteral("tide")
+                && binding.value(QStringLiteral("method")).toString() == QStringLiteral("swipeRight"));
+        foundPreviousView = foundPreviousView
+            || (binding.value(QStringLiteral("mods")).toString() == QStringLiteral("SUPER")
+                && binding.value(QStringLiteral("key")).toString() == QStringLiteral("left")
+                && binding.value(QStringLiteral("target")).toString() == QStringLiteral("tide")
+                && binding.value(QStringLiteral("method")).toString() == QStringLiteral("swipeLeft"));
+    }
+
+    QVERIFY(foundNextView);
+    QVERIFY(foundPreviousView);
+}
+
+void ShortcutConfigTests::legacyArrowShortcutsMigrateToBidirectionalCycle()
+{
+    QTemporaryDir configHome;
+    QVERIFY(configHome.isValid());
+    qputenv("XDG_CONFIG_HOME", configHome.path().toLocal8Bit());
+    qputenv("TIDE_ISLAND_COMPOSITOR", "hyprland");
+
+    Backend backend;
+    QVariantMap config;
+    config.insert(QStringLiteral("shortcutBindings"), QVariantList{
+        QVariantMap{
+            {QStringLiteral("mods"), QStringLiteral("SUPER")},
+            {QStringLiteral("key"), QStringLiteral("right")},
+            {QStringLiteral("target"), QStringLiteral("tide")},
+            {QStringLiteral("method"), QStringLiteral("showLyrics")},
+        },
+        QVariantMap{
+            {QStringLiteral("mods"), QStringLiteral("SUPER")},
+            {QStringLiteral("key"), QStringLiteral("left")},
+            {QStringLiteral("target"), QStringLiteral("tide")},
+            {QStringLiteral("method"), QStringLiteral("showCustom")},
+        },
+    });
+    QVERIFY(backend.save(config));
+
+    Backend reloaded;
+    bool migratedRight = false;
+    bool migratedLeft = false;
+    for (const QVariant &value : reloaded.shortcutBindings()) {
+        const QVariantMap binding = value.toMap();
+        migratedRight = migratedRight
+            || (binding.value(QStringLiteral("key")).toString() == QStringLiteral("right")
+                && binding.value(QStringLiteral("method")).toString() == QStringLiteral("swipeRight"));
+        migratedLeft = migratedLeft
+            || (binding.value(QStringLiteral("key")).toString() == QStringLiteral("left")
+                && binding.value(QStringLiteral("method")).toString() == QStringLiteral("swipeLeft"));
+    }
+
+    QVERIFY(migratedRight);
+    QVERIFY(migratedLeft);
 }
 
 void ShortcutConfigTests::defaultsIncludeNotificationHistory()
@@ -283,6 +355,9 @@ void ShortcutConfigTests::niriConfigUsesNiriKeyNames()
     QVERIFY(config.contains(QStringLiteral("\"--any-display\"")));
     QVERIFY(config.contains(QStringLiteral("Super+Right")));
     QVERIFY(config.contains(QStringLiteral("\"tide\" \"swipeRight\"")));
+    QVERIFY(config.contains(QStringLiteral("Super+Left")));
+    QVERIFY(config.contains(QStringLiteral("\"tide\" \"swipeLeft\"")));
+    QVERIFY(!config.contains(QStringLiteral("\"tide\" \"showCustom\"")));
     QVERIFY(!config.contains(QStringLiteral("\"tide\" \"showLyrics\"")));
     QVERIFY(config.contains(QStringLiteral("Super+W")));
     QVERIFY(config.contains(QStringLiteral("\"tide\" \"toggleWallpaperPicker\"")));

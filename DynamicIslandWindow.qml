@@ -533,8 +533,28 @@ PanelWindow {
     function swipeRightWindow() {
         if (islandContainer.restingState === "lyrics")
             islandContainer.showTimeCapsule();
+        else if (islandContainer.restingState === "normal") {
+            if (islandContainer.hasCustomLeftItems)
+                islandContainer.showCustomCapsule();
+            else
+                islandContainer.showLyricsCapsule();
+        }
+        else
+            islandContainer.showLyricsCapsule();
+
+        showAutoHiddenIsland("manual");
+        scheduleAutoHide();
+    }
+
+    function swipeLeftWindow() {
+        if (islandContainer.restingState === "custom")
+            islandContainer.showTimeCapsule();
         else if (islandContainer.restingState === "normal")
+            islandContainer.showLyricsCapsule();
+        else if (islandContainer.hasCustomLeftItems)
             islandContainer.showCustomCapsule();
+        else
+            islandContainer.showTimeCapsule();
 
         showAutoHiddenIsland("manual");
         scheduleAutoHide();
@@ -932,7 +952,24 @@ PanelWindow {
         Keys.onPressed: (event) => {
             if (!root.overviewVisible) return;
 
-            if ((event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier)) || event.key === Qt.Key_Backtab) {
+            const view = islandContainer.overviewView;
+            if (event.key === Qt.Key_H) {
+                if (view)
+                    view.focusAdjacentWorkspace(0, -1);
+                event.accepted = true;
+            } else if (event.key === Qt.Key_J) {
+                if (view)
+                    view.focusAdjacentWorkspace(1, 0);
+                event.accepted = true;
+            } else if (event.key === Qt.Key_K) {
+                if (view)
+                    view.focusAdjacentWorkspace(-1, 0);
+                event.accepted = true;
+            } else if (event.key === Qt.Key_L) {
+                if (view)
+                    view.focusAdjacentWorkspace(0, 1);
+                event.accepted = true;
+            } else if ((event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier)) || event.key === Qt.Key_Backtab) {
                 if (root.hyprlandIntegration)
                     root.hyprlandIntegration.focusWorkspace("r-1");
                 event.accepted = true;
