@@ -212,10 +212,6 @@ hl.exec_once("tide-island")
 
 在任意应用启动器中搜索 `Tide Island Settings`。
 
-快捷键页面可以自动应用按键绑定。在 niri 上，它会写入 `~/.config/tide-island/niri-shortcuts.kdl`，并在 `~/.config/niri/config.kdl` 中引入该文件，使用 `niri validate` 验证配置，然后通过 `niri msg action load-config-file` 重新加载 niri。
-
-默认情况下，`Super + 右方向键` 会在歌词、时钟和自定义视图之间正向循环，`Super + 左方向键` 则反向循环。
-
 ## 常用命令
 
 #### 修改配置后重启：
