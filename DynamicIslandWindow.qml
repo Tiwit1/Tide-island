@@ -156,9 +156,13 @@ PanelWindow {
         if (islandContainer.wallpaperPickerLayerVisible
                 || islandContainer.applicationLauncherLayerVisible)
             return WlrKeyboardFocus.Exclusive;
+        // Keep keyboard focus on the overview until an overview action closes it.
+        // Click-to-focus closes the overview before focusing the selected client.
+        if (root.monitorFocused && root.overviewVisible)
+            return WlrKeyboardFocus.Exclusive;
         if (islandContainer.expandedPlayerKeyboardFocusRequested)
             return WlrKeyboardFocus.OnDemand;
-        if (root.monitorFocused && (root.overviewVisible || root.connectivityPromptActive))
+        if (root.monitorFocused && root.connectivityPromptActive)
             return WlrKeyboardFocus.OnDemand;
         return WlrKeyboardFocus.None;
     }
