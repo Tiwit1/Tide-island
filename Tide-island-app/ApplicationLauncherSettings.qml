@@ -279,7 +279,7 @@ PagePanel {
                     width: parent.width
                     visible: root.statusText.length > 0
                     text: root.statusText
-                    color: root.statusIsError ? "#8f2f16" : Theme.selectedColor
+                    color: root.statusIsError ? Theme.errorTextColor : Theme.selectedColor
                     wrapMode: Text.WordWrap
                     font.family: Theme.textFontFamily
                     font.pixelSize: 13
