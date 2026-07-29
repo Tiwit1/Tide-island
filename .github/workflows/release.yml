@@ -33,6 +33,7 @@ jobs:
           - name: openSUSE Tumbleweed
             image: opensuse/tumbleweed
             install: >-
+              zypper --non-interactive refresh &&
               zypper --non-interactive install --no-recommends gcc-c++ cmake
               ninja pkg-config git tar gzip dbus-1 qt6-base-devel
               qt6-declarative-devel qt6-qt5compat-imports systemd-devel
