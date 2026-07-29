@@ -105,7 +105,7 @@ PagePanel {
 
                         Text {
                             width: parent.width
-                            text: "Search installed apps, then hover an app and click its star — or right-click it — to add a favorite. Favorite order updates the next time the launcher opens."
+                            text: "Search installed apps, then hover an app and click its star — or right-click it — to add a favorite. Drag favorites in the launcher to reorder them; number shortcuts follow the same order."
                             color: Theme.secondaryTextColor
                             wrapMode: Text.WordWrap
                             font.family: Theme.textFontFamily
