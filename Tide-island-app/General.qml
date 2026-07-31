@@ -124,6 +124,19 @@ PagePanel {
 
                     SplitLine { width: parent.width }
 
+                    ConfigRow {
+                        title: "Background Transparency"
+                        description: "Opacity of the island background (0 = fully transparent, 100 = solid)"
+                        keyName: "islandBackgroundOpacity"
+                        fallbackText: "60"
+                        numeric: true
+                        minimumValue: 0
+                        maximumValue: 100
+                        width: parent.width
+                    }
+
+                    SplitLine { width: parent.width }
+
                     ClockFormatRow { width: parent.width }
 
                     SplitLine { width: parent.width }

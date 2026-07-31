@@ -671,16 +671,17 @@ FocusScope {
                             anchors.centerIn: parent
                             width: 64
                             height: 64
-                            source: Quickshell.iconPath(appDelegate.entry.icon, "application-x-executable")
+                            source: Quickshell.iconPath(appDelegate.entry.icon, true)
                             asynchronous: true
                             mipmap: true
                         }
 
                         Text {
                             anchors.centerIn: parent
-                            visible: appIcon.status === Image.Error
+                            z: 100
+                            visible: appIcon.source.toString() === ""
                             text: String(appDelegate.entry.name).charAt(0).toLocaleUpperCase()
-                            color: "#f5f5f7"
+                            color: "white"
                             font.family: root.textFontFamily
                             font.pixelSize: 24
                             font.weight: Font.DemiBold

@@ -55,6 +55,7 @@ class UserConfigBackend final : public QObject {
     Q_PROPERTY(int islandExclusiveZone READ islandExclusiveZone NOTIFY islandExclusiveZoneChanged FINAL)
     Q_PROPERTY(int islandTopMargin READ islandTopMargin NOTIFY islandTopMarginChanged FINAL)
     Q_PROPERTY(int islandPositionX READ islandPositionX NOTIFY islandPositionXChanged FINAL)
+    Q_PROPERTY(int islandBackgroundOpacity READ islandBackgroundOpacity NOTIFY islandBackgroundOpacityChanged FINAL)
     Q_PROPERTY(int bodyFontSize READ bodyFontSize NOTIFY bodyFontSizeChanged FINAL)
     Q_PROPERTY(int titleFontSize READ titleFontSize NOTIFY titleFontSizeChanged FINAL)
     Q_PROPERTY(int iconFontSize READ iconFontSize NOTIFY iconFontSizeChanged FINAL)
@@ -102,6 +103,7 @@ public:
     int islandExclusiveZone() const;
     int islandTopMargin() const;
     int islandPositionX() const;
+    int islandBackgroundOpacity() const;
     int bodyFontSize() const;
     int titleFontSize() const;
     int iconFontSize() const;
@@ -152,6 +154,7 @@ signals:
     void islandExclusiveZoneChanged();
     void islandTopMarginChanged();
     void islandPositionXChanged();
+    void islandBackgroundOpacityChanged();
     void bodyFontSizeChanged();
     void titleFontSizeChanged();
     void iconFontSizeChanged();
@@ -198,6 +201,7 @@ private:
     bool m_islandAutoHideEnabled = true;
     int m_islandAutoHideDelayMs = 1000;
     int m_islandWidth = 140;
+    int m_islandBackgroundOpacity = 60;
     int m_islandHeight = 38;
     int m_islandExclusiveZone = 45;
     int m_islandTopMargin = 4;

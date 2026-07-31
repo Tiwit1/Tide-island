@@ -1786,7 +1786,7 @@ PanelWindow {
             )
             color: root.overviewContentVisible
                 ? root.overviewCapsuleColor
-                : (notificationHistorySurface ? "#080808" : StyleTokens.black)
+                : (notificationHistorySurface ? "#080808" : Qt.rgba(0, 0, 0, userConfig.islandBackgroundOpacity / 100.0))
             y: userConfig.islandTopMargin
                 - (1 - root.autoHideProgress) * (targetHeight + userConfig.islandTopMargin + 8)
             x: parent ? parent.width * userConfig.islandPositionX / 100 - width / 2 : 0
