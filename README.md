@@ -272,7 +272,7 @@ Thanks to:
 
 ## Community
 
-- Discord: https://discord.gg/gEmqgz76
+- Discord: immaculate_star_98558
 - Email: enhaoswen@gmail.com
 
 ---
