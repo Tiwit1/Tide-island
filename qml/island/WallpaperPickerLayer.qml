@@ -371,6 +371,11 @@ FocusScope {
         root.forceActiveFocus();
     }
 
+    function focusSearch() {
+        searchBar.expanded = true;
+        searchInput.forceActiveFocus();
+    }
+
     function moveNext() {
         pathView.incrementCurrentIndex();
     }
@@ -383,6 +388,10 @@ FocusScope {
         switch (event.key) {
         case Qt.Key_Escape:
             root.closeRequested();
+            event.accepted = true;
+            break;
+        case Qt.Key_Slash:
+            root.focusSearch();
             event.accepted = true;
             break;
         case Qt.Key_Right:
@@ -621,10 +630,7 @@ FocusScope {
                     hoverEnabled: true
                     enabled: !searchBar.expanded
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        searchBar.expanded = true;
-                        searchInput.forceActiveFocus();
-                    }
+                    onClicked: root.focusSearch()
                 }
             }
 
