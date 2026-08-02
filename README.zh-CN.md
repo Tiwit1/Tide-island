@@ -263,7 +263,7 @@ journalctl --user -u tide-island -f
 
 ## 社区
 
-- Discord: immaculate_star_98558
+- Discord: https://discord.gg/Rcj3uPtKwD
 - Email: enhaoswen@gmail.com
 
 ---
