@@ -937,6 +937,10 @@ PanelWindow {
             }
 
             onWorkspaceActivated: function(workspaceId) {
+                if(userConfig.islandShowWorkspaceOnAutoHide){
+                    root.showAutoHiddenIsland();
+                }
+
                 islandContainer.showWorkspaceCapsule(workspaceId);
             }
         }
