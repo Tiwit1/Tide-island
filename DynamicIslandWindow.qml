@@ -1759,7 +1759,7 @@ PanelWindow {
                 case "control_center":
                     return 34;
                 case "notification_center":
-                    return mainCapsule.targetHeight * 40 / 165;
+                    return mainCapsule.targetHeight * 36 / 165;
                 case "wallpaper_picker":
                 case "application_launcher":
                     return 34;
