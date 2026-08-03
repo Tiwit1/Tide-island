@@ -198,7 +198,7 @@ Tide Island provides a systemd user service.
 Enable and start it immediately (Recommended):
 
 ```bash
-systemctl --user enable --now tide-island
+systemctl --user enable --now tide-island.service
 ```
 
 If you want to manage startup manually, add this to your `hyprland.conf`:

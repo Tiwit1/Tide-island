@@ -189,7 +189,7 @@ Tide Island 提供 systemd 用户服务。
 立即启用并启动（推荐）：
 
 ```bash
-systemctl --user enable --now tide-island
+systemctl --user enable --now tide-island.service
 ```
 
 如果希望手动管理自启动，请在 `hyprland.conf` 中添加：
