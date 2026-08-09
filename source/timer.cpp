@@ -1,0 +1,124 @@
+#include "timer.hpp"
+#include "log.hpp"
+#include "struct.hpp"
+
+#include <chrono>
+#include <queue>
+#include <poll.h>
+#include <sys/timerfd.h>
+#include <unistd.h>
+
+using namespace std;
+using namespace std::chrono;
+
+namespace {
+
+int timer_fd{-1};
+
+struct LaterDeadline {
+    bool operator()(
+        const Event& left,
+        const Event& right
+    ) const noexcept {
+        return left.deadline > right.deadline;
+    }
+};
+
+priority_queue<Event, vector<Event>, LaterDeadline> timer_queue;
+
+void set_timer_at(steady_clock::time_point deadline) {
+    const duration since_epoch = deadline.time_since_epoch();
+    const duration seconds_part = duration_cast<seconds>(since_epoch);
+    const auto nanoseconds_part = duration_cast<nanoseconds>(since_epoch - seconds_part);
+    itimerspec spec{};
+
+    spec.it_value.tv_sec = static_cast<time_t>(seconds_part.count());
+
+    spec.it_value.tv_nsec =
+        static_cast<long>(nanoseconds_part.count());
+
+    if (timerfd_settime(
+        timer_fd,
+        TFD_TIMER_ABSTIME,
+        &spec,
+        nullptr
+    ) == -1) {
+        Log::fatal("timerfd_settime failed");
+    }
+}
+
+Event top() {
+    if (!timer_queue.empty()) {
+        return timer_queue.top();
+    }
+    Log::fatal("Timer queue is empty");
+}
+
+void pop() {
+    if (timer_queue.empty()) {
+        Log::fatal("Timer queue is empty");
+    }
+
+    Event timer = timer_queue.top();
+
+    if (timer.callback) {
+        timer.callback();
+    }
+    timer_queue.pop();
+}
+
+} // namespace
+
+void Timer::push(
+    microseconds duration,
+    void (*callback)()
+) {
+    if (timer_fd == -1) {
+        Log::fatal("Timer is not initialized");
+    }
+    if (!callback) {
+        Log::fatal("Timer callback is null");
+    }
+
+    const steady_clock::time_point next_deadline = steady_clock::now() + duration;
+    const bool becomes_earliest = timer_queue.empty() || next_deadline < timer_queue.top().deadline;
+
+    if (becomes_earliest) {
+        set_timer_at(next_deadline);
+    }
+
+    timer_queue.push({next_deadline, callback});
+}
+
+void Timer::init() {
+    timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC);
+
+    if (timer_fd == -1) {
+        Log::fatal("timerfd_create failed");
+    }
+}
+
+void Timer::handle_timerfd() {
+
+    uint64_t expiration_count{};
+
+    const ssize_t result = read(
+        timer_fd,
+        &expiration_count,
+        sizeof(expiration_count)
+    );
+
+    if (result != sizeof(expiration_count)) {
+        Log::fatal("timerfd read failed");
+    }
+
+    const auto now = steady_clock::now();
+
+    while (!timer_queue.empty() && timer_queue.top().deadline <= now) {
+        pop();
+    }
+
+    if (!timer_queue.empty()) {
+        set_timer_at(timer_queue.top().deadline);
+    }
+}
