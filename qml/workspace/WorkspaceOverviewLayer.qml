@@ -26,7 +26,7 @@ Item {
     property real windowCornerRadius: 15
     property real scale: 0.18
     property int rows: 2
-    property int columns: 5
+    property int columns: 3
     property bool orderRightLeft: false
     property bool orderBottomUp: false
     property bool centerIcons: true

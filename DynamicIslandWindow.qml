@@ -875,28 +875,6 @@ PanelWindow {
             }
         }
 
-        CompositorWorkspaceTracker {
-            id: workspaceTracker
-
-            compositor: CompositorBackend.compositor
-            hyprMonitor: root.hyprMonitor
-            hyprMonitorName: root.hyprMonitorName
-            outputName: root.compositorOutputName
-            monitorFocused: root.monitorFocused
-
-            onWorkspaceSynced: function(workspaceId) {
-                islandContainer.currentWs = workspaceId;
-            }
-
-            onWorkspaceActivated: function(workspaceId) {
-                if(userConfig.islandShowWorkspaceOnAutoHide){
-                    root.showAutoHiddenIsland();
-                }
-
-                islandContainer.showWorkspaceCapsule(workspaceId);
-            }
-        }
-
         Behavior on osdProgress {
             enabled: islandContainer.osdProgressAnimationEnabled
 
@@ -1959,29 +1937,10 @@ PanelWindow {
                 }
             }
 
-            Loader {
-                id: workspaceLayerLoader
-                anchors.fill: parent
-                active: !root.overviewVisible
-                    && islandContainer.islandState === "long_capsule"
-                    && (islandContainer.workspaceOriginSide !== "none"
-                        || Math.abs(islandContainer.swipeTransitionProgress) < 0.001)
-                asynchronous: false
-                visible: active
-
-                sourceComponent: Component {
-                    WorkspaceLayer {
-                        workspaceId: islandContainer.currentWs
-                        displayText: "Workspace " + islandContainer.currentWs
-                        textFontFamily: root.textFontFamily
-                        textPixelSize: root.bodyFontSize
-                        animateVisibility: islandContainer.restingState === "normal"
-                        transitionProgress: islandContainer.swipeTransitionProgress
-                        showCondition: true
-                        slideDirection: islandContainer.workspaceOriginSide
-                    }
-                }
-            }
+                        // workspaceId: islandContainer.currentWs
+                        // displayText: "Workspace " + islandContainer.currentWs
+                        // textFontFamily: root.textFontFamily
+                        // textPixelSize: root.bodyFontSize
 
             Loader {
                 id: bluetoothExpandedLoader
