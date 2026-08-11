@@ -738,7 +738,7 @@ PanelWindow {
         clockFormat: userConfig.clockFormat
     }
 
-    // --- 灵动岛主容器与全局状态 ---
+    // --- Conteneur principal et état global de la Dynamic Island ---
     FocusScope {
         id: islandContainer
         anchors.fill: parent
@@ -1678,7 +1678,7 @@ PanelWindow {
             }
         }
 
-        // --- UI 渲染：灵动岛主干 ---
+        // --- UI : structure principale de la Dynamic Island ---
         Rectangle {
             id: mainCapsule
             z: 5
@@ -1773,7 +1773,8 @@ PanelWindow {
                 case "notification":
                     return islandContainer.notificationExpanded ? 28 : mainCapsule.targetHeight / 2;
                 default:
-                    return userConfig.islandHeight / 2;
+                    //return userConfig.islandHeight / 2;
+                    return 10;
                 }
             }
             function sideSwipeWidthForProgress(progressValue) {
