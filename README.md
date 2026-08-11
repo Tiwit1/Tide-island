@@ -235,26 +235,14 @@ systemctl --user stop tide-island
 journalctl --user -u tide-island -f
 ```
 
-#### IPC Commands
-
-Tide Island can be controlled remotely via `quickshell ipc call`:
-
-| Command | Action |
-| --- | --- |
-| `quickshell ipc call tide toggleNotificationCenter` | Open or close the Notification Centre |
-| `quickshell ipc call tide openNotificationCenter` | Open the Notification Centre |
-| `quickshell ipc call tide closeNotificationCenter` | Close the Notification Centre |
-| `quickshell ipc call tide toggleApplicationLauncher` | Open or close the application launcher |
-
 <br>
-
-### Dismissing notifications
-
-Individual notifications can be dismissed by tapping the × button on the card. Use **Clear all** to remove all notifications at once.
 
 ## Contributing
 
 Issues, bug reports, design suggestions, and pull requests are all welcome.
+
+-  only 1 topic per issue.
+-  tell your ideas first before making a PR
 
 ## Acknowledgments
 
