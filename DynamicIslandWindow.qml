@@ -777,26 +777,12 @@ PanelWindow {
         property bool sideSwipeSettling: false
         property bool hoverExpandedActive: false
         property bool expandedPlayerKeyboardFocusRequested: false
-        property bool openTimerPageWhenExpanded: false
-        property int timerSelectedHours: 0
-        property int timerSelectedMinutes: 5
-        property int timerTotalSeconds: 300
-        property int timerRemainingSeconds: 0
-        property bool timerRunning: false
-        property bool timerActive: false
-        property bool timerCompletionAnimating: false
-        property real timerCompletionPulse: 0
-        property real timerCompletionFlash: 0
+
         readonly property int defaultAutoHideInterval: 1250
         readonly property int notificationAutoHideInterval: 4200
         readonly property int bluetoothExpandedAutoHideInterval: 2500
         readonly property int swipeAnimationDuration: 220
-        readonly property real timerProgress: timerActive && timerTotalSeconds > 0
-            ? Math.max(0, Math.min(1, timerRemainingSeconds / timerTotalSeconds))
-            : 0
-        readonly property bool timerBubbleWanted: (timerActive && timerRemainingSeconds > 0 || timerCompletionAnimating)
-            && !root.overviewVisible
-            && (islandState === "normal" || islandState === "lyrics" || islandState === "custom")
+
         readonly property bool blocksTransientSplit: islandState === "expanded"
             || islandState === "bluetooth_expanded"
             || islandState === "control_center"
@@ -807,7 +793,7 @@ PanelWindow {
         readonly property bool splitShowsText: islandState === "split" && osdProgress < 0 && osdCustomText !== ""
         readonly property bool splitShowsIconOnly: islandState === "split" && osdProgress < 0 && osdCustomText === ""
         readonly property bool splitUsesExtendedLayout: splitShowsProgress || splitShowsText
-        readonly property real splitCapsuleWidth: splitShowsProgress ? 248 : (splitShowsText ? 220 : userConfig.islandWidth)
+        readonly property real splitCapsuleWidth: splitShowsProgress ? 160 : (splitShowsText ? 220 : userConfig.islandWidth)
         readonly property bool canShowSideSwipe: islandState === "normal"
             || islandState === "custom"
             || islandState === "lyrics"
@@ -1320,53 +1306,6 @@ PanelWindow {
             timerRemainingSeconds = 0;
             timerRunning = false;
             timerActive = false;
-        }
-
-        function toggleTimer(hours, minutes) {
-            if (timerCompletionAnimating)
-                cancelTimerCompletionAnimation();
-
-            if (timerRunning) {
-                timerRunning = false;
-                return;
-            }
-
-            if (!timerActive || timerRemainingSeconds <= 0) {
-                syncTimerDuration(hours, minutes);
-                timerRemainingSeconds = timerTotalSeconds;
-                timerActive = timerRemainingSeconds > 0;
-            }
-
-            if (timerRemainingSeconds > 0)
-                timerRunning = true;
-        }
-
-        function resetTimer() {
-            cancelTimerCompletionAnimation();
-            timerRemainingSeconds = 0;
-            timerRunning = false;
-            timerActive = false;
-        }
-
-        function startTimerCompletionAnimation() {
-            timerCompletionPulse = 0;
-            timerCompletionFlash = 0;
-            timerCompletionAnimating = true;
-        }
-
-        function cancelTimerCompletionAnimation() {
-            timerCompletionAnimating = false;
-            timerCompletionPulse = 0;
-            timerCompletionFlash = 0;
-        }
-
-        function showExpandedTimerPage() {
-            openTimerPageWhenExpanded = true;
-            showExpandedPlayer(false);
-            if (expandedPlayerLoader.item && expandedPlayerLoader.item.openTimerPage) {
-                expandedPlayerLoader.item.openTimerPage();
-                openTimerPageWhenExpanded = false;
-            }
         }
 
         function showTransientCapsule(icon, progress, customText) {
@@ -2228,54 +2167,54 @@ PanelWindow {
                 }
             }
 
-            Loader {
-                id: expandedPlayerLoader
-                anchors.fill: parent
-                active: islandContainer.expandedLayerVisible
-                asynchronous: false
-                visible: active
-                onLoaded: {
-                    if (islandContainer.openTimerPageWhenExpanded
-                            && item && item.openTimerPage) {
-                        item.openTimerPage();
-                        islandContainer.openTimerPageWhenExpanded = false;
-                    }
-                }
+            // Loader {
+            //     id: expandedPlayerLoader
+            //     anchors.fill: parent
+            //     active: islandContainer.expandedLayerVisible
+            //     asynchronous: false
+            //     visible: active
+            //     onLoaded: {
+            //         if (islandContainer.openTimerPageWhenExpanded
+            //                 && item && item.openTimerPage) {
+            //             item.openTimerPage();
+            //             islandContainer.openTimerPageWhenExpanded = false;
+            //         }
+            //     }
 
-                sourceComponent: Component {
-                    ExpandedPlayerLayer {
-                        currentArtUrl: islandContainer.currentArtUrl
-                        currentTrack: islandContainer.currentTrack
-                        currentArtist: islandContainer.currentArtist
-                        timePlayed: islandContainer.timePlayed
-                        timeTotal: islandContainer.timeTotal
-                        trackProgress: islandContainer.trackProgress
-                        activePlayer: islandContainer.activePlayer
-                        iconFontFamily: root.iconFontFamily
-                        textFontFamily: root.textFontFamily
-                        timerSelectedHours: islandContainer.timerSelectedHours
-                        timerSelectedMinutes: islandContainer.timerSelectedMinutes
-                        timerTotalSeconds: islandContainer.timerTotalSeconds
-                        timerRemainingSeconds: islandContainer.timerRemainingSeconds
-                        timerRunning: islandContainer.timerRunning
-                        timerActive: islandContainer.timerActive
-                        showCondition: islandContainer.expandedLayerVisible
-                        onControlPressed: islandContainer.suppressCapsuleClick()
-                        onBackgroundClicked: islandContainer.smartRestoreState()
-                        onKeyboardFocusRequested: islandContainer.requestExpandedPlayerKeyboardFocus()
-                        onKeyboardFocusReleased: islandContainer.releaseExpandedPlayerKeyboardFocus()
-                        onPreviousRequested: mediaController.previous()
-                        onTimerToggleRequested: function(hours, minutes) {
-                            islandContainer.toggleTimer(hours, minutes);
-                        }
-                        onTimerResetRequested: islandContainer.resetTimer()
-                        onTimerDurationRequested: function(hours, minutes) {
-                            if (!islandContainer.timerActive)
-                                islandContainer.syncTimerDuration(hours, minutes);
-                        }
-                    }
-                }
-            }
+            //     sourceComponent: Component {
+            //         ExpandedPlayerLayer {
+            //             currentArtUrl: islandContainer.currentArtUrl
+            //             currentTrack: islandContainer.currentTrack
+            //             currentArtist: islandContainer.currentArtist
+            //             timePlayed: islandContainer.timePlayed
+            //             timeTotal: islandContainer.timeTotal
+            //             trackProgress: islandContainer.trackProgress
+            //             activePlayer: islandContainer.activePlayer
+            //             iconFontFamily: root.iconFontFamily
+            //             textFontFamily: root.textFontFamily
+            //             timerSelectedHours: islandContainer.timerSelectedHours
+            //             timerSelectedMinutes: islandContainer.timerSelectedMinutes
+            //             timerTotalSeconds: islandContainer.timerTotalSeconds
+            //             timerRemainingSeconds: islandContainer.timerRemainingSeconds
+            //             timerRunning: islandContainer.timerRunning
+            //             timerActive: islandContainer.timerActive
+            //             showCondition: islandContainer.expandedLayerVisible
+            //             onControlPressed: islandContainer.suppressCapsuleClick()
+            //             onBackgroundClicked: islandContainer.smartRestoreState()
+            //             onKeyboardFocusRequested: islandContainer.requestExpandedPlayerKeyboardFocus()
+            //             onKeyboardFocusReleased: islandContainer.releaseExpandedPlayerKeyboardFocus()
+            //             onPreviousRequested: mediaController.previous()
+            //             onTimerToggleRequested: function(hours, minutes) {
+            //                 islandContainer.toggleTimer(hours, minutes);
+            //             }
+            //             onTimerResetRequested: islandContainer.resetTimer()
+            //             onTimerDurationRequested: function(hours, minutes) {
+            //                 if (!islandContainer.timerActive)
+            //                     islandContainer.syncTimerDuration(hours, minutes);
+            //             }
+            //         }
+            //     }
+            // }
 
             Loader {
                 id: bluetoothExpandedLoader
@@ -2455,248 +2394,6 @@ PanelWindow {
                 }
             }
 
-        }
-
-        Item {
-            id: timerBubble
-
-            property bool mounted: islandContainer.timerBubbleWanted
-            property real reveal: islandContainer.timerBubbleWanted ? 1 : 0
-            readonly property int bubbleSize: 34
-            readonly property real hiddenX: mainCapsule.x + mainCapsule.width - width * 0.62
-            readonly property real shownX: mainCapsule.x + mainCapsule.width + 8
-            readonly property real centerY: mainCapsule.y + mainCapsule.height / 2 - height / 2
-
-            width: bubbleSize
-            height: bubbleSize
-            x: hiddenX + (shownX - hiddenX) * reveal
-            y: centerY + (1 - reveal) * 10
-            z: 6
-            visible: mounted
-            opacity: reveal * root.autoHideProgress
-            scale: (0.55 + reveal * 0.45) * (0.96 + root.autoHideProgress * 0.04) * (1 + islandContainer.timerCompletionPulse * 0.12)
-            transformOrigin: Item.Center
-
-            Connections {
-                target: islandContainer
-
-                function onTimerBubbleWantedChanged() {
-                    timerBubbleShowAnimation.stop();
-                    timerBubbleHideAnimation.stop();
-
-                    if (islandContainer.timerBubbleWanted) {
-                        timerBubble.mounted = true;
-                        timerBubbleShowAnimation.restart();
-                    } else {
-                        timerBubbleHideAnimation.restart();
-                    }
-                }
-
-                function onTimerProgressChanged() {
-                    timerBubbleRing.requestPaint();
-                }
-
-                function onTimerRemainingSecondsChanged() {
-                    timerBubbleRing.requestPaint();
-                }
-
-                function onTimerTotalSecondsChanged() {
-                    timerBubbleRing.requestPaint();
-                }
-
-                function onTimerCompletionAnimatingChanged() {
-                    timerBubbleRing.requestPaint();
-                }
-
-                function onTimerCompletionFlashChanged() {
-                    timerBubbleRing.requestPaint();
-                }
-            }
-
-            NumberAnimation {
-                id: timerBubbleShowAnimation
-
-                target: timerBubble
-                property: "reveal"
-                from: timerBubble.reveal
-                to: 1
-                duration: 360
-                easing.type: Easing.OutCubic
-            }
-
-            NumberAnimation {
-                id: timerBubbleHideAnimation
-
-                target: timerBubble
-                property: "reveal"
-                from: timerBubble.reveal
-                to: 0
-                duration: 280
-                easing.type: Easing.InCubic
-                onStopped: {
-                    if (!islandContainer.timerBubbleWanted && timerBubble.reveal <= 0.001)
-                        timerBubble.mounted = false;
-                }
-            }
-
-            SequentialAnimation {
-                id: timerBubbleCompletionAnimation
-
-                running: islandContainer.timerCompletionAnimating
-
-                onStarted: {
-                    timerBubbleShowAnimation.stop();
-                    timerBubbleHideAnimation.stop();
-                    timerBubble.mounted = true;
-                    timerBubble.reveal = 1;
-                }
-
-                onStopped: {
-                    if (islandContainer.timerCompletionAnimating)
-                        islandContainer.timerCompletionAnimating = false;
-                    islandContainer.timerCompletionPulse = 0;
-                    islandContainer.timerCompletionFlash = 0;
-                    timerBubbleRing.requestPaint();
-                }
-
-                ParallelAnimation {
-                    NumberAnimation {
-                        target: islandContainer
-                        property: "timerCompletionPulse"
-                        from: 0
-                        to: 1
-                        duration: 140
-                        easing.type: Easing.OutCubic
-                    }
-
-                    NumberAnimation {
-                        target: islandContainer
-                        property: "timerCompletionFlash"
-                        from: 0
-                        to: 1
-                        duration: 140
-                        easing.type: Easing.OutCubic
-                    }
-                }
-
-                ParallelAnimation {
-                    NumberAnimation {
-                        target: islandContainer
-                        property: "timerCompletionPulse"
-                        from: 1
-                        to: 0
-                        duration: 380
-                        easing.type: Easing.OutCubic
-                    }
-
-                    NumberAnimation {
-                        target: islandContainer
-                        property: "timerCompletionFlash"
-                        from: 1
-                        to: 0
-                        duration: 380
-                        easing.type: Easing.InOutQuad
-                    }
-                }
-
-                PauseAnimation {
-                    duration: 380
-                }
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                anchors.margins: 2
-                radius: width / 2
-                color: StyleTokens.black
-            }
-
-            Canvas {
-                id: timerBubbleRing
-
-                anchors.fill: parent
-                anchors.margins: 1
-
-                Component.onCompleted: requestPaint()
-                onVisibleChanged: requestPaint()
-                onWidthChanged: requestPaint()
-                onHeightChanged: requestPaint()
-
-                onPaint: {
-                    const ctx = getContext("2d");
-                    const centerX = width / 2;
-                    const centerY = height / 2;
-                    const completionActive = islandContainer.timerCompletionAnimating;
-                    const flash = Math.max(0, Math.min(1, islandContainer.timerCompletionFlash));
-                    const lineWidth = completionActive ? 3 + flash : 3;
-                    const radius = Math.min(width, height) / 2 - lineWidth / 2;
-                    const progress = Math.max(0, Math.min(1, islandContainer.timerProgress));
-                    const startAngle = -Math.PI / 2;
-                    const endAngle = startAngle - Math.PI * 2 * progress;
-
-                    ctx.clearRect(0, 0, width, height);
-                    ctx.lineCap = "round";
-                    ctx.lineWidth = lineWidth;
-
-                    ctx.beginPath();
-                    ctx.strokeStyle = "#303036";
-                    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-                    ctx.stroke();
-
-                    if (completionActive) {
-                        if (flash > 0) {
-                            ctx.beginPath();
-                            ctx.lineWidth = lineWidth + 1.5;
-                            ctx.strokeStyle = "rgba(255, 204, 0, " + (0.18 * flash) + ")";
-                            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-                            ctx.stroke();
-                        }
-
-                        ctx.beginPath();
-                        ctx.lineWidth = lineWidth;
-                        ctx.strokeStyle = "rgba(255, 204, 0, " + (0.72 + 0.28 * flash) + ")";
-                        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-                        ctx.stroke();
-                    } else if (progress > 0) {
-                        ctx.beginPath();
-                        ctx.strokeStyle = "#ffcc00";
-                        ctx.arc(centerX, centerY, radius, startAngle, endAngle, true);
-                        ctx.stroke();
-                    }
-                }
-            }
-
-            Text {
-                anchors.centerIn: parent
-                anchors.horizontalCenterOffset: -1
-                text: "󰔛"
-                color: "white"
-                font.pixelSize: root.iconFontSize - 1
-                font.family: root.iconFontFamily
-                font.weight: Font.DemiBold
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                enabled: timerBubble.mounted && root.autoHideProgress > 0.5
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onEntered: {
-                    if (root.autoHideEnabled) {
-                        root.autoHidePointerInside = true;
-                        root.showAutoHiddenIsland();
-                    }
-                }
-                onExited: {
-                    if (root.autoHideEnabled) {
-                        root.autoHidePointerInside = false;
-                        root.scheduleAutoHide();
-                    }
-                }
-                onClicked: islandContainer.showExpandedTimerPage()
-            }
         }
 
         ConnectivityDetailShell {
