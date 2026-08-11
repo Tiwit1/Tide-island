@@ -122,7 +122,6 @@ PanelWindow {
         ? Math.ceil(userConfig.islandTopMargin + root.overviewCapsuleHeight + 8)
         : 0
     readonly property real requestedWindowHeight: Math.max(
-        root.notificationCenterWindowHeight,
         root.capsuleWindowHeight,
         root.connectivityDetailWindowHeight,
         root.overviewWindowHeight,
@@ -173,8 +172,6 @@ PanelWindow {
     readonly property int bodyFontSize: userConfig.bodyFontSize
     readonly property int titleFontSize: userConfig.titleFontSize
     readonly property int iconFontSize: userConfig.iconFontSize
-    readonly property string defaultSplitIcon: "\ud83c\udfa7"
-    readonly property string notificationStatusIcon: "\uf0f3"
     readonly property real overviewWindowCornerRadius: 12
     readonly property int dynamicIslandAcceptedButtons: userConfig.mouseButtonsMask([
         1,
@@ -211,7 +208,6 @@ PanelWindow {
     property real autoHideProgress: autoHideTargetVisible ? 1 : 0
     readonly property bool exclusiveZoneTargetActive: (!autoHideEnabled && autoHideTargetVisible)
         || (autoHideRevealSource === "edge" && autoHideTargetVisible)
-        || islandContainer.notificationLayerVisible
     property real exclusiveZoneProgress: exclusiveZoneTargetActive ? 1 : 0
     readonly property real autoHideRevealWidth: Math.min(root.width, Math.max(userConfig.islandWidth + 120, 240))
     readonly property real autoHideRevealHeight: autoHideEnabled ? 10 : 0
@@ -251,9 +247,6 @@ PanelWindow {
         ? userConfig.islandTopMargin + 320 + root.controlCenterMaximumExtraHeight + 12
         : 0
 
-    readonly property real notificationCenterWindowHeight: islandContainer.notificationCenterLayerVisible
-        ? userConfig.islandTopMargin + (notificationCenterLoader.item ? notificationCenterLoader.item.contentHeight : 400) + 6
-        : 0
     readonly property real connectivityDetailGap: 16
     readonly property int connectivityDetailAnimationDuration: 360
     readonly property string overviewWallpaperSource: overviewWallpaperCache.effectiveSource
@@ -514,10 +507,6 @@ PanelWindow {
             prewarmWallpaperCache();
     }
 
-    function showNotification(appName, summary, body) {
-        islandContainer.showNotificationCapsule(appName, summary, body);
-    }
-
     function showClockWindow() {
         islandContainer.showTimeCapsule();
         showAutoHiddenIsland("manual");
@@ -576,13 +565,6 @@ PanelWindow {
             islandContainer.smartRestoreState();
         else
             islandContainer.showControlCenter();
-    }
-
-    function toggleNotificationCenterWindow() {
-        if (islandContainer.islandState === "notification_center")
-            islandContainer.smartRestoreState();
-        else
-            islandContainer.showNotificationCenter();
     }
 
     function toggleWallpaperPickerWindow() {
@@ -748,7 +730,6 @@ PanelWindow {
             || (root.monitorFocused && (root.overviewVisible || root.connectivityPromptActive))
 
         property string islandState: "normal"
-        property string splitIcon: root.defaultSplitIcon
         property real osdProgress: -1.0
         property bool osdProgressAnimationEnabled: true
         property string osdCustomText: ""
@@ -765,7 +746,6 @@ PanelWindow {
         property string notificationBody: ""
         property bool notificationExpanded: false
         property var bluetoothExpandedDevice: null
-        property var notificationHistoryModel: ListModel {}
         readonly property var cavaLevels: systemState.cavaLevels
         property real swipeTransitionProgress: 0
         property string workspaceOriginSide: "none"
@@ -779,21 +759,9 @@ PanelWindow {
         property bool expandedPlayerKeyboardFocusRequested: false
 
         readonly property int defaultAutoHideInterval: 1250
-        readonly property int notificationAutoHideInterval: 4200
         readonly property int bluetoothExpandedAutoHideInterval: 2500
         readonly property int swipeAnimationDuration: 220
 
-        readonly property bool blocksTransientSplit: islandState === "expanded"
-            || islandState === "bluetooth_expanded"
-            || islandState === "control_center"
-            || islandState === "notification"
-            || islandState === "wallpaper_picker"
-            || islandState === "application_launcher"
-        readonly property bool splitShowsProgress: islandState === "split" && osdProgress >= 0
-        readonly property bool splitShowsText: islandState === "split" && osdProgress < 0 && osdCustomText !== ""
-        readonly property bool splitShowsIconOnly: islandState === "split" && osdProgress < 0 && osdCustomText === ""
-        readonly property bool splitUsesExtendedLayout: splitShowsProgress || splitShowsText
-        readonly property real splitCapsuleWidth: splitShowsProgress ? 160 : (splitShowsText ? 220 : userConfig.islandWidth)
         readonly property bool canShowSideSwipe: islandState === "normal"
             || islandState === "custom"
             || islandState === "lyrics"
@@ -827,9 +795,7 @@ PanelWindow {
         )
         readonly property bool expandedLayerVisible: !root.overviewVisible && islandState === "expanded"
         readonly property bool bluetoothExpandedLayerVisible: !root.overviewVisible && islandState === "bluetooth_expanded"
-        readonly property bool notificationLayerVisible: !root.overviewVisible && islandState === "notification"
         readonly property bool controlCenterLayerVisible: !root.overviewVisible && islandState === "control_center"
-        readonly property bool notificationCenterLayerVisible: !root.overviewVisible && islandState === "notification_center"
         readonly property bool wallpaperPickerLayerVisible: !root.overviewVisible && islandState === "wallpaper_picker"
         readonly property bool applicationLauncherLayerVisible: !root.overviewVisible && islandState === "application_launcher"
         readonly property var activePlayer: mediaController.activePlayer
@@ -994,19 +960,6 @@ PanelWindow {
                 if (islandState === "expanded")
                     smartRestoreState();
                 return;
-            case "toggleNotificationCenter":
-                if (islandState === "notification_center")
-                    smartRestoreState();
-                else
-                    showNotificationCenter();
-                return;
-            case "openNotificationCenter":
-                showNotificationCenter();
-                return;
-            case "closeNotificationCenter":
-                if (islandState === "notification_center")
-                    smartRestoreState();
-                return;
             case "toggleControlCenter":
                 if (islandState === "control_center")
                     smartRestoreState();
@@ -1099,8 +1052,6 @@ PanelWindow {
                 return "right";
             case "long_capsule":
                 return workspaceOriginSide;
-            case "split":
-                return splitOriginSide;
             default:
                 return "none";
             }
@@ -1127,18 +1078,6 @@ PanelWindow {
             notificationBody = "";
             notificationExpanded = false;
             bluetoothExpandedDevice = null;
-        }
-
-        function cleanNotificationText(text) {
-            return String(text === undefined || text === null ? "" : text)
-                .replace(/<[^>]*>/g, " ")
-                .replace(/&nbsp;/g, " ")
-                .replace(/&amp;/g, "&")
-                .replace(/&quot;/g, "\"")
-                .replace(/&lt;/g, "<")
-                .replace(/&gt;/g, ">")
-                .replace(/\s+/g, " ")
-                .trim();
         }
 
         function prepareRestingCapsuleGeometry() {
@@ -1316,63 +1255,14 @@ PanelWindow {
             if (blocksTransientSplit) return;
 
             const nextProgress = progress >= 0 ? progress : -1.0;
-            const animateProgress = islandState === "split" && osdProgress >= 0 && nextProgress >= 0;
             const animateFromSide = currentTransientOriginSide();
 
             abortSideTransientMode();
-            splitIcon = icon;
             osdCustomText = customText;
             setOsdProgress(nextProgress, animateProgress);
             splitOriginSide = animateFromSide;
-            islandState = "split";
             swipeTransitionProgress = 0;
             restartAutoHideTimer();
-        }
-
-        function showNotificationCapsule(appName, summary, body) {
-            if (root.overviewVisible || islandState === "control_center" || islandState === "expanded") return;
-
-            const cleanedAppName = cleanNotificationText(appName);
-            const cleanedSummary = cleanNotificationText(summary);
-            const cleanedBody = cleanNotificationText(body);
-            const resolvedSummary = cleanedSummary !== ""
-                ? cleanedSummary
-                : (cleanedBody !== "" ? cleanedBody : "New notification");
-
-            abortSideTransientMode();
-            clearTransientCapsule();
-            notificationAppName = cleanedAppName !== "" ? cleanedAppName : "Notification";
-            notificationSummary = resolvedSummary;
-            notificationBody = cleanedSummary !== "" ? cleanedBody : "";
-            notificationExpanded = false;
-            islandState = "notification";
-            restartAutoHideTimer(notificationAutoHideInterval);
-            // Store in notification history
-                if (notificationHistoryModel) {
-                    notificationHistoryModel.insert(0, {
-                        appName: cleanedAppName !== "" ? cleanedAppName : "Notification",
-                        summary: resolvedSummary,
-                        body: cleanedSummary !== "" ? cleanedBody : "",
-                        timestamp: new Date()
-                    });
-                    if (notificationHistoryModel.count > 50)
-                        notificationHistoryModel.remove(50, notificationHistoryModel.count - 50);
-                }
-
-        }
-
-        function toggleNotificationExpansionIfNeeded() {
-            if (islandState !== "notification" || !notificationLoader.item || !notificationLoader.item.hasOverflowContent)
-                return false;
-
-            if (notificationExpanded) {
-                smartRestoreState();
-                return true;
-            }
-
-            notificationExpanded = true;
-            stopAutoHideTimer();
-            return true;
         }
 
         function suppressCapsuleClick(cancelPreparedOverview) {
@@ -1437,7 +1327,7 @@ PanelWindow {
         }
 
         function showBluetoothExpanded(device) {
-            if (!device || root.overviewVisible || islandState === "control_center" || islandState === "notification")
+            if (!device || root.overviewVisible || islandState === "control_center")
                 return;
 
             cancelSideSwipeSettle();
@@ -1458,16 +1348,6 @@ PanelWindow {
             mainCapsule.displayedWidth = mainCapsule.baseTargetWidth;
             stopAutoHideTimer();
         }
-
-        function showNotificationCenter() {
-            cancelSideSwipeSettle();
-            abortSideTransientMode();
-            clearTransientCapsule();
-            islandState = "notification_center";
-            mainCapsule.displayedWidth = mainCapsule.baseTargetWidth;
-            stopAutoHideTimer();
-        }
-
 
         function showWallpaperPicker() {
             cancelSideSwipeSettle();
@@ -1508,7 +1388,7 @@ PanelWindow {
         function showWorkspaceCapsule(wsId) {
             currentWs = wsId;
             if (root.autoHideSuppressesTransientReveal) return;
-            if (islandState === "control_center" || islandState === "notification") return;
+            if (islandState === "control_center") return;
             const animateFromSide = currentTransientOriginSide();
             clearTransientCapsule();
             sideTransientRestoreTimer.stop();
@@ -1609,7 +1489,6 @@ PanelWindow {
             if (userConfig.disableAutoExpandOnTrackChange) return;
             if (currentTrack !== ""
                     && islandState !== "control_center"
-                    && islandState !== "notification"
                     && islandState !== "bluetooth_expanded") {
                 if (root.autoHideSuppressesTransientReveal) return;
                 if (islandState === "expanded" && !expandedByPlayerAutoOpen) return;
@@ -1632,43 +1511,29 @@ PanelWindow {
                 if (root.overviewVisible) return root.overviewCapsuleWidth;
                 if (sideTransientRestoreTimer.running) {
                     if (islandContainer.restingState === "lyrics"
-                            && ((islandContainer.islandState === "split" && islandContainer.splitOriginSide === "right")
-                                || (islandContainer.islandState === "long_capsule" && islandContainer.workspaceOriginSide === "right"))) {
+                            && (islandContainer.islandState === "long_capsule" && islandContainer.workspaceOriginSide === "right")) {
                         return islandContainer.lyricsCapsuleWidth;
                     }
 
                     if (islandContainer.restingState === "custom"
-                            && ((islandContainer.islandState === "split" && islandContainer.splitOriginSide === "left")
-                                || (islandContainer.islandState === "long_capsule" && islandContainer.workspaceOriginSide === "left"))) {
+                            && (islandContainer.islandState === "long_capsule" && islandContainer.workspaceOriginSide === "left")) {
                         return islandContainer.customCapsuleWidth;
                     }
                 }
 
                 switch (islandContainer.islandState) {
-                case "split":
-                    return islandContainer.splitCapsuleWidth;
-                case "long_capsule":
-                    return 220;
                 case "custom":
                     return islandContainer.customCapsuleWidth;
                 case "lyrics":
                     return islandContainer.lyricsCapsuleWidth;
                 case "control_center":
                     return 420;
-                case "notification_center":
-                    return 410;
                 case "wallpaper_picker":
                 case "application_launcher":
                     return 1100;
                 case "expanded":
                 case "bluetooth_expanded":
                     return 410;
-                case "notification":
-                    if (!notificationLoader.item) return 272;
-                    return Math.max(
-                        notificationLoader.item.minimumWidth,
-                        Math.min(root.width - 48, notificationLoader.item.maximumWidth, notificationLoader.item.preferredWidth)
-                    );
                 default:
                     return userConfig.islandWidth;
                 }
@@ -1679,18 +1544,12 @@ PanelWindow {
                 switch (islandContainer.islandState) {
                 case "control_center":
                     return 320 + (controlCenterLoader.item ? controlCenterLoader.item.controlCenterExtraHeight : 32);
-                case "notification_center":
-                    return notificationCenterLoader.item ? notificationCenterLoader.item.contentHeight : 200;
                 case "wallpaper_picker":
                 case "application_launcher":
                     return 260;
                 case "expanded":
                 case "bluetooth_expanded":
                     return 165;
-                case "notification":
-                    return notificationLoader.item
-                        ? Math.max(56, notificationLoader.item.preferredHeight)
-                        : 56;
                 default:
                     return userConfig.islandHeight;
                 }
@@ -1701,16 +1560,13 @@ PanelWindow {
                 switch (islandContainer.islandState) {
                 case "control_center":
                     return 34;
-                case "notification_center":
-                    return mainCapsule.targetHeight * 36 / 165;
                 case "wallpaper_picker":
                 case "application_launcher":
                     return 34;
                 case "expanded":
                 case "bluetooth_expanded":
                     return 40;
-                case "notification":
-                    return islandContainer.notificationExpanded ? 28 : mainCapsule.targetHeight / 2;
+
                 default:
                     //return userConfig.islandHeight / 2;
                     return 10;
@@ -2104,46 +1960,6 @@ PanelWindow {
             }
 
             Loader {
-                id: splitIconLoader
-                anchors.fill: parent
-                active: !root.overviewVisible && islandContainer.splitShowsIconOnly
-                asynchronous: false
-                visible: active
-
-                sourceComponent: Component {
-                    SplitIconLayer {
-                        iconText: islandContainer.splitIcon
-                        iconFontFamily: root.iconFontFamily
-                        transitionProgress: islandContainer.swipeTransitionProgress
-                        slideDirection: islandContainer.splitOriginSide
-                        showCondition: true
-                    }
-                }
-            }
-
-            Loader {
-                id: osdLayerLoader
-                anchors.fill: parent
-                active: !root.overviewVisible && islandContainer.splitUsesExtendedLayout
-                asynchronous: false
-                visible: active
-
-                sourceComponent: Component {
-                    OsdLayer {
-                        iconText: islandContainer.splitIcon
-                        progress: islandContainer.osdProgress
-                        customText: islandContainer.osdCustomText
-                        iconFontFamily: root.iconFontFamily
-                        textFontFamily: root.textFontFamily
-                        heroFontFamily: root.heroFontFamily
-                        transitionProgress: islandContainer.swipeTransitionProgress
-                        slideDirection: islandContainer.splitOriginSide
-                        showCondition: true
-                    }
-                }
-            }
-
-            Loader {
                 id: workspaceLayerLoader
                 anchors.fill: parent
                 active: !root.overviewVisible
@@ -2167,55 +1983,6 @@ PanelWindow {
                 }
             }
 
-            // Loader {
-            //     id: expandedPlayerLoader
-            //     anchors.fill: parent
-            //     active: islandContainer.expandedLayerVisible
-            //     asynchronous: false
-            //     visible: active
-            //     onLoaded: {
-            //         if (islandContainer.openTimerPageWhenExpanded
-            //                 && item && item.openTimerPage) {
-            //             item.openTimerPage();
-            //             islandContainer.openTimerPageWhenExpanded = false;
-            //         }
-            //     }
-
-            //     sourceComponent: Component {
-            //         ExpandedPlayerLayer {
-            //             currentArtUrl: islandContainer.currentArtUrl
-            //             currentTrack: islandContainer.currentTrack
-            //             currentArtist: islandContainer.currentArtist
-            //             timePlayed: islandContainer.timePlayed
-            //             timeTotal: islandContainer.timeTotal
-            //             trackProgress: islandContainer.trackProgress
-            //             activePlayer: islandContainer.activePlayer
-            //             iconFontFamily: root.iconFontFamily
-            //             textFontFamily: root.textFontFamily
-            //             timerSelectedHours: islandContainer.timerSelectedHours
-            //             timerSelectedMinutes: islandContainer.timerSelectedMinutes
-            //             timerTotalSeconds: islandContainer.timerTotalSeconds
-            //             timerRemainingSeconds: islandContainer.timerRemainingSeconds
-            //             timerRunning: islandContainer.timerRunning
-            //             timerActive: islandContainer.timerActive
-            //             showCondition: islandContainer.expandedLayerVisible
-            //             onControlPressed: islandContainer.suppressCapsuleClick()
-            //             onBackgroundClicked: islandContainer.smartRestoreState()
-            //             onKeyboardFocusRequested: islandContainer.requestExpandedPlayerKeyboardFocus()
-            //             onKeyboardFocusReleased: islandContainer.releaseExpandedPlayerKeyboardFocus()
-            //             onPreviousRequested: mediaController.previous()
-            //             onTimerToggleRequested: function(hours, minutes) {
-            //                 islandContainer.toggleTimer(hours, minutes);
-            //             }
-            //             onTimerResetRequested: islandContainer.resetTimer()
-            //             onTimerDurationRequested: function(hours, minutes) {
-            //                 if (!islandContainer.timerActive)
-            //                     islandContainer.syncTimerDuration(hours, minutes);
-            //             }
-            //         }
-            //     }
-            // }
-
             Loader {
                 id: bluetoothExpandedLoader
                 anchors.fill: parent
@@ -2231,33 +1998,6 @@ PanelWindow {
                         iconFontFamily: root.iconFontFamily
                         textFontFamily: root.textFontFamily
                         showCondition: islandContainer.bluetoothExpandedLayerVisible
-                    }
-                }
-            }
-
-            Loader {
-                id: notificationLoader
-                anchors.fill: parent
-                active: islandContainer.notificationLayerVisible
-                asynchronous: false
-                visible: active
-
-                sourceComponent: Component {
-                    NotificationLayer {
-                        appName: islandContainer.notificationAppName
-                        summary: islandContainer.notificationSummary
-                        body: islandContainer.notificationBody
-                        expanded: islandContainer.notificationExpanded
-                        toggleButton: userConfig.mouseButton(userConfig.dynamicIslandPrimaryButton)
-                        iconText: root.notificationStatusIcon
-                        iconFontFamily: root.iconFontFamily
-                        textFontFamily: root.textFontFamily
-                        heroFontFamily: root.heroFontFamily
-                        showCondition: true
-                        onExpansionToggleRequested: {
-                            islandContainer.suppressCapsuleClick(true);
-                            islandContainer.toggleNotificationExpansionIfNeeded();
-                        }
                     }
                 }
             }
@@ -2301,27 +2041,6 @@ PanelWindow {
                         }
                         onConnectivityPanelRequested: function(kind, open) {
                             root.setConnectivityDetailVisible(kind, open);
-                        }
-                    }
-                }
-            }
-
-            Loader {
-                id: notificationCenterLoader
-                anchors.fill: parent
-                active: islandContainer.notificationCenterLayerVisible
-                asynchronous: false
-                visible: active
-
-                sourceComponent: Component {
-                    NotificationCenterLayer {
-                        notificationModel: islandContainer.notificationHistoryModel
-                        iconFontFamily: root.iconFontFamily
-                        textFontFamily: root.textFontFamily
-                        heroFontFamily: root.heroFontFamily
-
-                        onClearAllRequested: {
-                            islandContainer.notificationHistoryModel.clear();
                         }
                     }
                 }
