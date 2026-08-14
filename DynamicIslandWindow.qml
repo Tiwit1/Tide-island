@@ -2074,6 +2074,14 @@ PanelWindow {
 
         }
 
+        Rectangle {
+            id: wpCapsule
+            z: 5
+            Text {
+                text: "workspaces"
+            }
+        }
+
         ConnectivityDetailShell {
             id: wifiConnectivityDetailShell
 

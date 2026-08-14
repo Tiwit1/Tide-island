@@ -23,16 +23,6 @@ Scope {
         }
     }
 
-    function showNotificationAll(appName, summary, body) {
-        if (focusEnabled)
-            return;
-
-        shellRoot.forEachWindow((window) => {
-            if (window && window.showNotification)
-                window.showNotification(appName, summary, body);
-        });
-    }
-
     function anyOverviewOpen() {
         if (CompositorBackend.compositor === "niri")
             return false;
@@ -237,10 +227,6 @@ Scope {
 
         function toggleControlCenter() {
             shellRoot.forFocusedWindow((window) => window.toggleControlCenterWindow());
-        }
-
-        function toggleNotificationCenter() {
-            shellRoot.forFocusedWindow((window) => window.toggleNotificationCenterWindow());
         }
 
         function toggleWallpaperPicker() {
