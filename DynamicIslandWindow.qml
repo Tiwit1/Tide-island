@@ -43,12 +43,6 @@ PanelWindow {
         ? controlCenterLoader.item.hasConnectivityPrompt
         : false
     readonly property var controlCenterRef: controlCenterLoader.item
-    readonly property int currentMonitorWorkspaceId: {
-        compositorRevision;
-        return compositorIsNiri
-            ? CompositorBackend.activeWorkspaceIndexForOutput(screenOutputName)
-            : (hyprlandIntegration ? hyprlandIntegration.workspaceId : 1);
-    }
     readonly property bool screenRecordingActive: shellRootController
         && shellRootController.screenRecordingActive !== undefined
         ? !!shellRootController.screenRecordingActive
@@ -733,7 +727,7 @@ PanelWindow {
         property real osdProgress: -1.0
         property bool osdProgressAnimationEnabled: true
         property string osdCustomText: ""
-        property int currentWs: root.currentMonitorWorkspaceId > 0 ? root.currentMonitorWorkspaceId : 1
+
         readonly property int batteryCapacity: systemState.batteryCapacity
         readonly property bool isCharging: systemState.isCharging
         readonly property real currentVolume: systemState.currentVolume
@@ -865,7 +859,6 @@ PanelWindow {
             configuredLeftSwipeItems: userConfig.dynamicIslandLeftSwipeItems
             timeText: timeObj.currentTime
             dateText: timeObj.currentDateLabel
-            currentWorkspace: islandContainer.currentWs
             customSwipeActive: customSwipeLoader.active
             lyricsCavaActive: islandContainer.lyricsSwipeVisible
                 && islandContainer.rightSwipeProgress > 0.001
@@ -884,37 +877,6 @@ PanelWindow {
             NumberAnimation {
                 duration: capsuleMouseArea.sideSwipeInteractive ? 0 : islandContainer.swipeAnimationDuration
                 easing.type: Easing.OutCubic
-            }
-        }
-
-        Keys.onPressed: (event) => {
-            if (!root.overviewVisible) return;
-
-            const view = islandContainer.overviewView;
-            if (event.key === Qt.Key_H) {
-                if (view)
-                    view.focusAdjacentWorkspace(0, -1);
-                event.accepted = true;
-            } else if (event.key === Qt.Key_J) {
-                if (view)
-                    view.focusAdjacentWorkspace(1, 0);
-                event.accepted = true;
-            } else if (event.key === Qt.Key_K) {
-                if (view)
-                    view.focusAdjacentWorkspace(-1, 0);
-                event.accepted = true;
-            } else if (event.key === Qt.Key_L) {
-                if (view)
-                    view.focusAdjacentWorkspace(0, 1);
-                event.accepted = true;
-            } else if ((event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier)) || event.key === Qt.Key_Backtab) {
-                if (root.hyprlandIntegration)
-                    root.hyprlandIntegration.focusWorkspace("r-1");
-                event.accepted = true;
-            } else if (event.key === Qt.Key_Tab) {
-                if (root.hyprlandIntegration)
-                    root.hyprlandIntegration.focusWorkspace("r+1");
-                event.accepted = true;
             }
         }
 
@@ -1361,20 +1323,6 @@ PanelWindow {
 
         function showTimeCapsule() {
             showRestingCapsule("normal");
-        }
-
-        function showWorkspaceCapsule(wsId) {
-            currentWs = wsId;
-            if (root.autoHideSuppressesTransientReveal) return;
-            if (islandState === "control_center") return;
-            const animateFromSide = currentTransientOriginSide();
-            clearTransientCapsule();
-            sideTransientRestoreTimer.stop();
-            workspaceOriginSide = animateFromSide;
-            splitOriginSide = "none";
-            islandState = "long_capsule";
-            swipeTransitionProgress = 0;
-            restartAutoHideTimer();
         }
 
         Timer { id: autoHideTimer; interval: islandContainer.defaultAutoHideInterval; onTriggered: islandContainer.smartRestoreState() }
@@ -2075,10 +2023,19 @@ PanelWindow {
         }
 
         Rectangle {
-            id: wpCapsule
-            z: 5
-            Text {
-                text: "workspaces"
+            id: workspacesCapsule
+            width: implicitWidth
+
+            Row {
+                // anchors.right: parent.left
+                // anchors.rightMargin: 2
+                // anchors.top: parent.top
+                // anchors.topMargin: 6
+
+                Workspaces {
+                    screen: modelData
+                    labels: ["#1", "#2", "#3", "#4", "#5", "#6", "#7", "#8", "#9"]
+                }
             }
         }
 
