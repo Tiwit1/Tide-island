@@ -2024,17 +2024,21 @@ PanelWindow {
 
         Rectangle {
             id: workspacesCapsule
-            width: implicitWidth
+            width: 210
+            height: userConfig.islandHeight
+            radius: 10
+
+            color: Qt.rgba(0, 0, 0, userConfig.islandBackgroundOpacity / 100.0)
+            anchors.top: parent.top
+            anchors.topMargin: userConfig.islandTopMargin
+
+            anchors.left: parent.left
+            anchors.leftMargin: 40
 
             Row {
-                // anchors.right: parent.left
-                // anchors.rightMargin: 2
-                // anchors.top: parent.top
-                // anchors.topMargin: 6
-
+                anchors.centerIn: parent
                 Workspaces {
                     screen: modelData
-                    labels: ["#1", "#2", "#3", "#4", "#5", "#6", "#7", "#8", "#9"]
                 }
             }
         }

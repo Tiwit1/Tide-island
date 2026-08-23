@@ -4,8 +4,7 @@ import Quickshell.Hyprland
 
 Row {
     id: root
-    spacing: 21
-    property var labels: ["", "", "", "", "", "", "", "", ""]
+    spacing: 15
 
     // Pass in the screen this bar belongs to from the parent (e.g. PanelWindow's `screen`)
     required property var screen
@@ -13,37 +12,26 @@ Row {
     // Resolve the Hyprland monitor object that matches this QtQuick screen
     property var monitor: Hyprland.monitorFor(root.screen)
 
+    // How many workspace dots to show
+    property int workspaceCount: 6
+
     Repeater {
-        model: 6
+        model: root.workspaceCount
 
         Item {
             id: workspacesItem
-            // Compare against THIS monitor's active workspace, not the global focused one
             property bool isActive: root.monitor?.activeWorkspace?.id === (index + 1)
 
-            implicitWidth: Math.max(circle.implicitWidth, 22)
-            implicitHeight: Math.max(circle.implicitHeight, 22)
+            implicitWidth: 16
+            implicitHeight: 16
 
-            Rectangle {
-                id: circle
+            WorkspaceIndicator {
                 anchors.centerIn: parent
-                height: Math.max(label.implicitWidth, label.implicitHeight) + 8
-                width: height + 10
-                radius: 10
-                color: '#000000'
-                opacity: workspacesItem.isActive ? 0.8 : 0
-                Behavior on opacity { NumberAnimation { duration: 120 } }
-            }
-
-            Text {
-                id: label
-                anchors.centerIn: parent
-                text: root.labels[index]
-                color: '#bdbdbd'
-                font {
-                    family: "JetBrainsMonoNL Nerd Font Mono"
-                }
-                Behavior on color { ColorAnimation { duration: 120 } }
+                width: 14
+                height: 14
+                active: workspacesItem.isActive
+                inactiveColor: "#bdbdbd"
+                activeColor: "#bdbdbd"
             }
 
             MouseArea {
