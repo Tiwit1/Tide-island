@@ -4,7 +4,7 @@ import Quickshell.Hyprland
 
 Row {
     id: root
-    spacing: 15
+    spacing: 10
 
     // Pass in the screen this bar belongs to from the parent (e.g. PanelWindow's `screen`)
     required property var screen
@@ -30,8 +30,8 @@ Row {
                 width: 14
                 height: 14
                 active: workspacesItem.isActive
-                inactiveColor: "#bdbdbd"
-                activeColor: "#bdbdbd"
+                inactiveColor: '#838383'
+                activeColor: '#ffffff'
             }
 
             MouseArea {

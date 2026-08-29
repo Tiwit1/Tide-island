@@ -1,34 +1,40 @@
 import QtQuick 2.15
 
+// A single workspace indicator that morphs between a plain dot
+// and a 4-point sparkle/astroid star (pointy tips, concave sides pinching
+// in toward the center) when active.
+//
+// Usage:
+//   WorkspaceIndicator {
+//       active: index === activeWorkspaceIndex
+//   }
+
 Item {
     id: root
     width: 18
     height: 18
 
     property bool active: false
-    property color inactiveColor: "#666666"
-    property color activeColor: "#f5c2e7"
+    property color inactiveColor: '#ffffff'
+    property color activeColor: '#ffffff'
 
-    // --- Shape tuning ---
-    property real tipReachRatio: 0.8     // how far tips extend, relative to min(width,height)
-    property real dotRadiusRatio: 0.18   // resting dot radius, relative to min(width,height)
-    property real concavity: 0.75        // 0..1, how deep the sides pinch toward center.
+    // --- Shape tuning (star state) ---
+    property real tipReachRatio: 1    // how far tips extend, relative to min(width,height)
+    property real concavity: 0.85        // 0..1, how deep the sides pinch toward center.
                                           // higher = sharper diamond/astroid, lower = softer/rounder
 
-    // --- Pop rotation ---
-    property real popRotationOffset: 90  // degrees the shape is twisted at rest; unwinds to 0 as it pops in
+    // --- Resting dot state ---
+    property real dotRadiusRatio: 0.25    // relative to min(width,height)
 
     // 0 = dot, 1 = fully formed star
     property real morphAmount: active ? 1.0 : 0.0
     Behavior on morphAmount {
         NumberAnimation {
-            duration: 300
+            duration: 260
             easing.type: Easing.OutBack
             easing.overshoot: 3
         }
     }
-
-    rotation: (1 - morphAmount) * popRotationOffset
 
     property color currentColor: Qt.rgba(
         inactiveColor.r + (activeColor.r - inactiveColor.r) * morphAmount,
@@ -59,18 +65,24 @@ Item {
 
             var dotRadius = minDim * root.dotRadiusRatio;
             var tipReachStar = minDim * root.tipReachRatio;
+            // Size is allowed to overshoot with the spring (raw t), which is what
+            // gives the pop its punch. The shape BLEND is clamped to 0..1 —
+            // letting it extrapolate past "pure star" during the overshoot would
+            // over-pull the control points past the center and self-intersect,
+            // which is what caused the flicker.
             var radius = dotRadius + (tipReachStar - dotRadius) * t;
+            var shapeT = Math.max(0, Math.min(1, t));
 
             var kappa = 0.5522847498; // standard circle-arc bezier handle constant
 
-            // Precompute the 4 tip positions and their tangential/radial handle vectors.
+            // Precompute the 4 tip positions and their tangential handle vectors
+            // (used for the resting circle state).
             var tips = [];
             var tangentHandle = [];
             for (var k = 0; k < 4; k++) {
                 var angle = -Math.PI / 2 + k * (Math.PI / 2); // tip0 up, then clockwise
                 var ux = Math.cos(angle), uy = Math.sin(angle);
                 tips.push({ x: cx + ux * radius, y: cy + uy * radius });
-                // tangent direction of travel around the circle at this point
                 var tx = -Math.sin(angle), ty = Math.cos(angle);
                 tangentHandle.push({ x: tx * radius * kappa, y: ty * radius * kappa });
             }
@@ -82,7 +94,8 @@ Item {
                 var j = (i + 1) % 4;
                 var tipI = tips[i], tipJ = tips[j];
 
-                // Radial-inward pull (star/astroid state)
+                // Radial-inward pull (star/astroid state) — this is what makes
+                // the sides concave instead of bulging outward.
                 var radialOutI = { x: (cx - tipI.x) * root.concavity, y: (cy - tipI.y) * root.concavity };
                 var radialInJ  = { x: (cx - tipJ.x) * root.concavity, y: (cy - tipJ.y) * root.concavity };
 
@@ -90,11 +103,11 @@ Item {
                 var tangentOutI = tangentHandle[i];
                 var tangentInJ  = { x: -tangentHandle[j].x, y: -tangentHandle[j].y };
 
-                // Blend control point offsets between circle (t=0) and star (t=1)
-                var c1x = tipI.x + tangentOutI.x + (radialOutI.x - tangentOutI.x) * t;
-                var c1y = tipI.y + tangentOutI.y + (radialOutI.y - tangentOutI.y) * t;
-                var c2x = tipJ.x + tangentInJ.x + (radialInJ.x - tangentInJ.x) * t;
-                var c2y = tipJ.y + tangentInJ.y + (radialInJ.y - tangentInJ.y) * t;
+                // Blend control point offsets between circle (shapeT=0) and star (shapeT=1)
+                var c1x = tipI.x + tangentOutI.x + (radialOutI.x - tangentOutI.x) * shapeT;
+                var c1y = tipI.y + tangentOutI.y + (radialOutI.y - tangentOutI.y) * shapeT;
+                var c2x = tipJ.x + tangentInJ.x + (radialInJ.x - tangentInJ.x) * shapeT;
+                var c2y = tipJ.y + tangentInJ.y + (radialInJ.y - tangentInJ.y) * shapeT;
 
                 ctx.bezierCurveTo(c1x, c1y, c2x, c2y, tipJ.x, tipJ.y);
             }
